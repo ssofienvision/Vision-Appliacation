@@ -141,7 +141,7 @@ export default function DataCleanupPage() {
       const newResults: CleanupResult[] = []
 
       // Step 1: Generate missing invoice numbers
-      const invoiceResult = await jobsService.generateMissingInvoiceNumbers()
+      const invoiceResult = await generateMissingInvoiceNumbers()
       newResults.push(invoiceResult)
 
       // Step 2: Fix NULL zip codes
@@ -149,7 +149,7 @@ export default function DataCleanupPage() {
       newResults.push(zipResult)
 
       // Step 3: Final invoice number generation
-      const finalInvoiceResult = await jobsService.generateMissingInvoiceNumbers()
+      const finalInvoiceResult = await generateMissingInvoiceNumbers()
       newResults.push(finalInvoiceResult)
 
       setResults(newResults)
@@ -158,6 +158,78 @@ export default function DataCleanupPage() {
       setResults([{ success: false, message: 'Error during data cleanup', updatedCount: 0 }])
     } finally {
       setLoading(false)
+    }
+  }
+
+  const generateMissingInvoiceNumbers = async (): Promise<CleanupResult> => {
+    try {
+      // Get all jobs without invoice numbers
+      const { data: jobsWithoutInvoices, error: fetchError } = await supabase
+        .from('jobs')
+        .select('invoice_number, date_recorded, technician, customer_name')
+        .is('invoice_number', null)
+        .order('date_recorded', { ascending: false })
+
+      if (fetchError) {
+        return { success: false, message: 'Error fetching jobs', updatedCount: 0 }
+      }
+
+      if (!jobsWithoutInvoices || jobsWithoutInvoices.length === 0) {
+        return { success: true, message: 'All jobs already have invoice numbers', updatedCount: 0 }
+      }
+
+      // Get the highest existing invoice number to start from
+      const { data: existingInvoices, error: maxError } = await supabase
+        .from('jobs')
+        .select('invoice_number')
+        .not('invoice_number', 'is', null)
+        .order('invoice_number', { ascending: false })
+        .limit(1)
+
+      let nextInvoiceNumber = 10000 // Start from 10000 if no existing invoices
+      
+      if (existingInvoices && existingInvoices.length > 0) {
+        const highestInvoice = existingInvoices[0].invoice_number
+        // Extract numeric part and increment
+        const numericPart = parseInt(highestInvoice.replace(/\D/g, '')) || 9999
+        nextInvoiceNumber = numericPart + 1
+      }
+
+      // Generate simple 5-digit invoice numbers
+      const updates = jobsWithoutInvoices.map((job: any, index: number) => {
+        const invoiceNumber = String(nextInvoiceNumber + index).padStart(5, '0')
+        
+        return {
+          invoice_number: invoiceNumber
+        }
+      })
+
+      // Update jobs in batches
+      const batchSize = 10
+      let updatedCount = 0
+
+      for (let i = 0; i < updates.length; i += batchSize) {
+        const batch = updates.slice(i, i + batchSize)
+        
+        const { error: updateError } = await supabase
+          .from('jobs')
+          .upsert(batch, { onConflict: 'invoice_number' })
+
+        if (updateError) {
+          return { success: false, message: `Error updating batch ${i / batchSize + 1}`, updatedCount }
+        }
+
+        updatedCount += batch.length
+      }
+
+      return { 
+        success: true, 
+        message: `Successfully generated invoice numbers for ${updatedCount} jobs`, 
+        updatedCount 
+      }
+
+    } catch (error) {
+      return { success: false, message: 'Unexpected error occurred', updatedCount: 0 }
     }
   }
 

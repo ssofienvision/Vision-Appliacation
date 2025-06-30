@@ -432,16 +432,26 @@ export const jobsService = {
 
       console.log(`📊 Found ${jobsWithoutInvoices.length} jobs without invoice numbers`)
 
-      // Generate invoice numbers and update database
+      // Get the highest existing invoice number to start from
+      const { data: existingInvoices, error: maxError } = await supabase
+        .from('jobs')
+        .select('invoice_number')
+        .not('invoice_number', 'is', null)
+        .order('invoice_number', { ascending: false })
+        .limit(1)
+
+      let nextInvoiceNumber = 10000 // Start from 10000 if no existing invoices
+      
+      if (existingInvoices && existingInvoices.length > 0) {
+        const highestInvoice = existingInvoices[0].invoice_number
+        // Extract numeric part and increment
+        const numericPart = parseInt(highestInvoice.replace(/\D/g, '')) || 9999
+        nextInvoiceNumber = numericPart + 1
+      }
+
+      // Generate simple 5-digit invoice numbers
       const updates = jobsWithoutInvoices.map((job: any, index: number) => {
-        const date = new Date(job.date_recorded)
-        const year = date.getFullYear()
-        const month = String(date.getMonth() + 1).padStart(2, '0')
-        const day = String(date.getDate()).padStart(2, '0')
-        const sequence = String(index + 1).padStart(3, '0')
-        
-        // Generate invoice number format: INV-YYYYMMDD-XXX
-        const invoiceNumber = `INV-${year}${month}${day}-${sequence}`
+        const invoiceNumber = String(nextInvoiceNumber + index).padStart(5, '0')
         
         return {
           invoice_number: invoiceNumber
