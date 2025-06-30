@@ -17,7 +17,8 @@
     "diagnose-db": "tsx scripts/diagnose-db.ts",
     "setup-auth": "tsx scripts/setup-auth.ts",
     "test-login": "tsx scripts/test-login.ts",
-    "create-test-user": "tsx scripts/create-test-user.ts"
+    "create-test-user": "tsx scripts/create-test-user.ts",
+    "fix-import-data": "tsx scripts/fix-import-data.ts"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
