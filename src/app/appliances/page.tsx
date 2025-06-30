@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { Job } from '@/lib/database'
 import { jobsService } from '@/lib/database'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Search, Filter, TrendingUp, Wrench } from 'lucide-react'
@@ -10,19 +11,6 @@ import Sidebar from '@/components/Sidebar'
 import { Button } from '@/components/ui/Button'
 import { BarChart3, DollarSign, LogOut } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-
-interface Job {
-  id: number
-  customer_name: string
-  total_amount: number
-  date_recorded: string
-  technician: string
-  type_serviced: string
-  make_serviced: string
-  invoice_number: string
-  parts_cost: number
-  is_oem_client: boolean
-}
 
 interface ApplianceStats {
   types: Array<{

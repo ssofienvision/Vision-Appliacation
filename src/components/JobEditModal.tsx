@@ -6,17 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { X, Save, AlertCircle, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
-
-interface Job {
-  invoice_number: string
-  customer_name: string
-  total_amount: number
-  date_recorded: string
-  technician: string
-  type_serviced: string
-  make_serviced: string
-  parts_cost?: number
-}
+import { Job } from '@/lib/database'
 
 interface JobEditModalProps {
   job: Job | null
