@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { jobsService } from '@/lib/database'
@@ -20,10 +20,6 @@ export default function DataCleanupPage() {
   const [results, setResults] = useState<CleanupResult[]>([])
   const [currentUser, setCurrentUser] = useState<any>(null)
   const router = useRouter()
-
-  useState(() => {
-    checkUser()
-  })
 
   const checkUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -46,6 +42,10 @@ export default function DataCleanupPage() {
 
     setCurrentUser(technicianData)
   }
+
+  useEffect(() => {
+    checkUser()
+  }, [])
 
   const fixNullZipCodes = async (): Promise<CleanupResult> => {
     try {
