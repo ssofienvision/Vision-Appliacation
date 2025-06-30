@@ -52,7 +52,7 @@ export default function DataCleanupPage() {
       // Get all jobs with NULL zip codes
       const { data: jobsWithNullZip, error: fetchError } = await supabase
         .from('jobs')
-        .select('zip_code_for_job, city, state, date_recorded')
+        .select('*')
         .is('zip_code_for_job', null)
         .order('date_recorded', { ascending: false })
 
@@ -64,8 +64,9 @@ export default function DataCleanupPage() {
         return { success: true, message: 'All jobs already have zip codes', updatedCount: 0 }
       }
 
-      // Generate default zip codes based on city/state or use a default
-      const updates = jobsWithNullZip.map((job: any) => {
+      // Update jobs one by one to avoid conflicts
+      let updatedCount = 0
+      for (const job of jobsWithNullZip) {
         let zipCode = '00000' // Default zip code
         
         // Try to assign zip codes based on city/state if available
@@ -99,27 +100,20 @@ export default function DataCleanupPage() {
           zipCode = zipCodeMap[cityState] || '00000'
         }
         
-        return {
-          zip_code_for_job: zipCode
-        }
-      })
-
-      // Update jobs in batches
-      const batchSize = 10
-      let updatedCount = 0
-
-      for (let i = 0; i < updates.length; i += batchSize) {
-        const batch = updates.slice(i, i + batchSize)
-        
         const { error: updateError } = await supabase
           .from('jobs')
-          .upsert(batch, { onConflict: 'zip_code_for_job' })
+          .update({ zip_code_for_job: zipCode })
+          .eq('date_recorded', job.date_recorded)
+          .eq('customer_name', job.customer_name)
+          .eq('technician', job.technician)
+          .is('zip_code_for_job', null)
 
         if (updateError) {
-          return { success: false, message: `Error updating batch ${i / batchSize + 1}`, updatedCount }
+          console.error('Error updating zip code for job:', updateError)
+          continue
         }
 
-        updatedCount += batch.length
+        updatedCount++
       }
 
       return { 
@@ -166,7 +160,7 @@ export default function DataCleanupPage() {
       // Get all jobs without invoice numbers
       const { data: jobsWithoutInvoices, error: fetchError } = await supabase
         .from('jobs')
-        .select('invoice_number, date_recorded, technician, customer_name')
+        .select('*')
         .is('invoice_number', null)
         .order('date_recorded', { ascending: false })
 
@@ -195,31 +189,26 @@ export default function DataCleanupPage() {
         nextInvoiceNumber = numericPart + 1
       }
 
-      // Generate simple 5-digit invoice numbers
-      const updates = jobsWithoutInvoices.map((job: any, index: number) => {
-        const invoiceNumber = String(nextInvoiceNumber + index).padStart(5, '0')
-        
-        return {
-          invoice_number: invoiceNumber
-        }
-      })
-
-      // Update jobs in batches
-      const batchSize = 10
+      // Update jobs one by one to avoid conflicts
       let updatedCount = 0
-
-      for (let i = 0; i < updates.length; i += batchSize) {
-        const batch = updates.slice(i, i + batchSize)
+      for (let i = 0; i < jobsWithoutInvoices.length; i++) {
+        const job = jobsWithoutInvoices[i]
+        const invoiceNumber = String(nextInvoiceNumber + i).padStart(5, '0')
         
         const { error: updateError } = await supabase
           .from('jobs')
-          .upsert(batch, { onConflict: 'invoice_number' })
+          .update({ invoice_number: invoiceNumber })
+          .eq('date_recorded', job.date_recorded)
+          .eq('customer_name', job.customer_name)
+          .eq('technician', job.technician)
+          .is('invoice_number', null)
 
         if (updateError) {
-          return { success: false, message: `Error updating batch ${i / batchSize + 1}`, updatedCount }
+          console.error('Error updating job:', updateError)
+          continue
         }
 
-        updatedCount += batch.length
+        updatedCount++
       }
 
       return { 
