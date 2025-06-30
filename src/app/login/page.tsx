@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Eye, EyeOff, Wrench } from 'lucide-react'
+import Link from 'next/link'
 
 export default function Login() {
   const router = useRouter()
@@ -188,6 +189,14 @@ export default function Login() {
                     <Eye className="h-4 w-4 text-gray-400" />
                   )}
                 </button>
+              </div>
+              <div className="mt-2 text-right">
+                <Link 
+                  href="/reset-password" 
+                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                >
+                  Forgot your password?
+                </Link>
               </div>
             </div>
 
