@@ -3,13 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Calculator, Package, Building2, User } from 'lucide-react'
-
-interface Job {
-  id: number
-  total_amount: number
-  parts_cost: number
-  is_oem_client: boolean
-}
+import { Job } from '@/lib/database'
 
 interface PartsRequest {
   id: number

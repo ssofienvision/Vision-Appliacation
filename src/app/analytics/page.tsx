@@ -3,13 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { Job } from '@/lib/database'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import SalesOverTimeChart from '@/components/charts/SalesOverTimeChart'
-import ServiceCallPieChart from '@/components/charts/ServiceCallPieChart'
-import JobTypeSalesChart from '@/components/charts/JobTypeSalesChart'
-import JobList from '@/components/JobList'
-import PayoutCalculator from '@/components/PayoutCalculator'
+import { SalesOverTimeChart, ServiceCallPieChart, JobTypeSalesChart } from '@/components/charts'
+import { PayoutCalculator, JobList } from '@/components'
 import Sidebar from '@/components/Sidebar'
 import { BarChart3, TrendingUp, DollarSign, Users, LogOut } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
@@ -23,19 +21,6 @@ interface JobTypeData {
   type: string
   totalSales: number
   count: number
-}
-
-interface Job {
-  id: number
-  customer_name: string
-  total_amount: number
-  date_recorded: string
-  technician: string
-  type_serviced: string
-  make_serviced: string
-  invoice_number: string
-  parts_cost: number
-  is_oem_client: boolean
 }
 
 interface AnalyticsData {
@@ -151,64 +136,69 @@ export default function AnalyticsPage() {
         ],
         jobs: [
           {
-            id: 1,
+            invoice_number: 'INV-001',
             customer_name: 'John Smith',
             total_amount: 245.50,
             date_recorded: '2024-01-15',
             technician: 'TECH001',
             type_serviced: 'HVAC Repair',
             make_serviced: 'Carrier',
-            invoice_number: 'INV-001',
             parts_cost: 45.00,
-            is_oem_client: false
+            is_oem_client: false,
+            created_at: '2024-01-15T10:00:00Z',
+            updated_at: '2024-01-15T10:00:00Z'
           },
           {
-            id: 2,
+            invoice_number: 'INV-002',
             customer_name: 'Sarah Johnson',
             total_amount: 189.75,
             date_recorded: '2024-01-14',
             technician: 'TECH002',
             type_serviced: 'Plumbing',
             make_serviced: 'Rheem',
-            invoice_number: 'INV-002',
             parts_cost: 25.50,
-            is_oem_client: true
+            is_oem_client: true,
+            created_at: '2024-01-14T14:30:00Z',
+            updated_at: '2024-01-14T14:30:00Z'
           },
           {
-            id: 3,
+            invoice_number: 'INV-003',
             customer_name: 'Mike Wilson',
             total_amount: 320.00,
             date_recorded: '2024-01-13',
             technician: 'TECH001',
             type_serviced: 'Electrical',
             make_serviced: 'GE',
-            invoice_number: 'INV-003',
             parts_cost: 80.00,
-            is_oem_client: false
+            is_oem_client: false,
+            created_at: '2024-01-13T09:15:00Z',
+            updated_at: '2024-01-13T09:15:00Z'
           },
           {
-            id: 4,
+            invoice_number: 'INV-004',
             customer_name: 'Lisa Brown',
             total_amount: 156.25,
             date_recorded: '2024-01-12',
             technician: 'TECH003',
             type_serviced: 'Appliance Repair',
             make_serviced: 'Whirlpool',
-            invoice_number: 'INV-004',
             parts_cost: 35.00,
-            is_oem_client: true
+            is_oem_client: true,
+            created_at: '2024-01-12T11:45:00Z',
+            updated_at: '2024-01-12T11:45:00Z'
           },
           {
-            id: 5,
+            invoice_number: 'INV-005',
             customer_name: 'David Lee',
             total_amount: 298.50,
             date_recorded: '2024-01-11',
             technician: 'TECH002',
             type_serviced: 'Heating System',
             make_serviced: 'Trane',
-            invoice_number: 'INV-005',
             parts_cost: 120.00,
-            is_oem_client: false
+            is_oem_client: false,
+            created_at: '2024-01-11T16:20:00Z',
+            updated_at: '2024-01-11T16:20:00Z'
           }
         ],
         summary: {
