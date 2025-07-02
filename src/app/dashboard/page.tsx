@@ -628,22 +628,25 @@ export default function Dashboard() {
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
           {/* Filters */}
-          <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
-            <DateFilter
-              onFilterChange={(filters) => {
-                // Handle custom date filters if needed
-                loadDashboardData()
-              }}
-              selectedPeriod={selectedPeriod}
-              setSelectedPeriod={setSelectedPeriod}
-            />
-            
-            <TechnicianFilter
-              technicians={technicians}
-              selectedTechnician={selectedTechnician}
-              onTechnicianChange={setSelectedTechnician}
-              isAdmin={currentUser?.role === 'admin'}
-            />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-4 sm:mb-6">
+            <div className="flex-1">
+              <DateFilter
+                onFilterChange={(filters) => {
+                  // Handle custom date filters if needed
+                  loadDashboardData()
+                }}
+                selectedPeriod={selectedPeriod}
+                setSelectedPeriod={setSelectedPeriod}
+              />
+            </div>
+            <div className="flex-1">
+              <TechnicianFilter
+                technicians={technicians}
+                selectedTechnician={selectedTechnician}
+                onTechnicianChange={setSelectedTechnician}
+                isAdmin={currentUser?.role === 'admin'}
+              />
+            </div>
           </div>
 
           {/* Dashboard Overview */}

@@ -188,10 +188,18 @@ export default function AdminImportPage() {
       })
 
     console.log('📊 Import Debug - Sample processed job:', newJobs[0])
-    console.log('📊 Import Debug - Invoice number mapping test:', {
-      rawValue: rows[0] ? rows[0][headers.findIndex((h: string) => h.includes('invoicenmbr'))] : 'N/A',
-      processedValue: newJobs[0]?.invoice_number
-    })
+    console.log('📊 Import Debug - Column mapping test:')
+    if (rows[0]) {
+      console.log('  Invoice number raw value:', rows[0][headers.findIndex((h: string) => h.toLowerCase().includes('invoice'))])
+      console.log('  Zip code raw value:', rows[0][headers.findIndex((h: string) => h.toLowerCase().includes('zip'))])
+      console.log('  Date raw value:', rows[0][headers.findIndex((h: string) => h.toLowerCase().includes('date'))])
+      console.log('  Customer raw value:', rows[0][headers.findIndex((h: string) => h.toLowerCase().includes('customer'))])
+    }
+    console.log('📊 Import Debug - Processed values:')
+    console.log('  Invoice number processed:', newJobs[0]?.invoice_number)
+    console.log('  Zip code processed:', newJobs[0]?.zip_code_for_job)
+    console.log('  Date processed:', newJobs[0]?.date_recorded)
+    console.log('  Customer processed:', newJobs[0]?.customer_name)
 
     if (newJobs.length === 0) {
       setImportStatus({ success: `No new jobs found in ${sheetName}` })
@@ -256,10 +264,41 @@ export default function AdminImportPage() {
 
   const processJobRow = (headers: string[], row: any[]) => {
     const getValue = (headerName: string) => {
-      const index = headers.findIndex(h => 
-        h.replace(/[^a-z0-9]/g, '') === headerName.replace(/[^a-z0-9]/g, '')
-      )
-      return index >= 0 ? (row[index] || '').toString().trim() : ''
+      // More flexible column matching - try multiple variations
+      const variations = [
+        headerName,
+        headerName.toLowerCase(),
+        headerName.toUpperCase(),
+        headerName.replace(/[^a-z0-9]/g, ''),
+        headerName.replace(/[^a-z0-9]/g, '').toLowerCase(),
+        headerName.replace(/[^a-z0-9]/g, '').toUpperCase()
+      ]
+      
+      for (const variation of variations) {
+        const index = headers.findIndex(h => {
+          // Try exact match first
+          if (h.toLowerCase() === variation.toLowerCase()) {
+            return true
+          }
+          // Try with spaces removed
+          const cleanHeader = h.replace(/[^a-z0-9]/g, '').toLowerCase()
+          const cleanVariation = variation.replace(/[^a-z0-9]/g, '').toLowerCase()
+          if (cleanHeader === cleanVariation) {
+            return true
+          }
+          // Try with underscores/spaces normalized
+          const normalizedHeader = h.replace(/[\s_]/g, ' ').toLowerCase().trim()
+          const normalizedVariation = variation.replace(/[\s_]/g, ' ').toLowerCase().trim()
+          if (normalizedHeader === normalizedVariation) {
+            return true
+          }
+          return false
+        })
+        if (index >= 0) {
+          return (row[index] || '').toString().trim()
+        }
+      }
+      return ''
     }
 
     const parseCurrency = (value: string) => {
@@ -285,14 +324,14 @@ export default function AdminImportPage() {
 
     // Only include essential columns that are most likely to exist
     const jobData: any = {
-      zip_code_for_job: getValue('zipcode') || getValue('zip_code') || getValue('zipcodeforjob') || null,
+      zip_code_for_job: getValue('zipcode') || getValue('zip_code') || getValue('zipcodeforjob') || getValue('zip') || getValue('postal') || getValue('postalcode') || null,
       city: getValue('city') || null,
       state: getValue('state') || null,
-      date_recorded: parseDate(getValue('date') || getValue('daterecorded') || getValue('date_recorded')),
+      date_recorded: parseDate(getValue('date') || getValue('daterecorded') || getValue('date_recorded') || getValue('jobdate') || getValue('servicedate') || getValue('completedate')),
       technician: getValue('tech') || getValue('technician') || null,
       customer_name: getValue('customer') || getValue('customername') || getValue('customer_name') || null,
       consumer_name_if_not_customer: getValue('consumername') || getValue('cnsmrn') || null,
-      invoice_number: getValue('invoice') || getValue('invoicenumber') || getValue('invoice_number') || getValue('invoicenmbr') || null,
+      invoice_number: getValue('invoice') || getValue('invoicenumber') || getValue('invoice_number') || getValue('invoicenmbr') || getValue('invoicenumber') || getValue('inv') || getValue('invnum') || null,
       merchandise_sold: parseCurrency(getValue('merchandise') || getValue('merchsold') || getValue('mrchndssold')),
       parts_sold: parseCurrency(getValue('partssold') || getValue('parts_sold') || getValue('partssold')),
       service_call_amount: parseCurrency(getValue('servicecall') || getValue('service_call_amount') || getValue('scallamount')),

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -24,11 +24,11 @@ export default function ResetPasswordPage() {
   const token = searchParams.get('token')
 
   // If we have a token, we're in reset mode
-  useState(() => {
+  useEffect(() => {
     if (token) {
       setStep('reset')
     }
-  })
+  }, [token])
 
   const handleSendResetEmail = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +51,7 @@ export default function ResetPasswordPage() {
       } else {
         setMessage({ 
           type: 'success', 
-          text: 'Password reset email sent! Check your inbox and click the link to reset your password.' 
+          text: 'Password reset email sent! Check your inbox (and spam folder) and click the link to reset your password.' 
         })
       }
     } catch (error) {
@@ -98,10 +98,31 @@ export default function ResetPasswordPage() {
       } else {
         setMessage({ 
           type: 'success', 
-          text: 'Password updated successfully! Redirecting to login...' 
+          text: 'Password updated successfully! Redirecting to dashboard...' 
         })
-        setTimeout(() => {
-          router.push('/login')
+        setTimeout(async () => {
+          // Get user role and redirect accordingly
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user?.email) {
+            try {
+              const { data: technicianData } = await supabase
+                .from('technicians')
+                .select('role')
+                .eq('email', user.email)
+                .single()
+
+              if (technicianData?.role === 'admin') {
+                router.push('/dashboard')
+              } else {
+                router.push('/tech-dashboard')
+              }
+            } catch (error) {
+              // Default to tech dashboard if role check fails
+              router.push('/tech-dashboard')
+            }
+          } else {
+            router.push('/login')
+          }
         }, 2000)
       }
     } catch (error) {

@@ -193,7 +193,7 @@ export default function Login() {
               <div className="mt-2 text-right">
                 <Link 
                   href="/reset-password" 
-                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                  className="text-sm text-blue-600 hover:text-blue-800 transition-colors underline hover:no-underline"
                 >
                   Forgot your password?
                 </Link>
