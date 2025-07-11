@@ -20,6 +20,7 @@ interface PartCostRequest {
   admin_notes?: string
   approved_by?: string
   approved_at?: string
+  parts_ordered_by: 'technician' | 'office'
   created_at: string
   updated_at: string
   job?: {
@@ -50,6 +51,7 @@ export default function PartRequestsPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [selectedRequest, setSelectedRequest] = useState<PartCostRequest | null>(null)
   const [adminNotes, setAdminNotes] = useState('')
+  const [partsOrderedBy, setPartsOrderedBy] = useState<'technician' | 'office'>('technician')
   const [isProcessing, setIsProcessing] = useState(false)
   const router = useRouter()
 
@@ -133,6 +135,7 @@ export default function PartRequestsPage() {
           admin_notes: adminNotes.trim() || null,
           approved_by: currentUser.name || currentUser.email,
           approved_at: new Date().toISOString(),
+          parts_ordered_by: partsOrderedBy,
           updated_at: new Date().toISOString()
         })
         .eq('id', request.id)
@@ -145,6 +148,7 @@ export default function PartRequestsPage() {
         await loadPartCostRequests()
         setSelectedRequest(null)
         setAdminNotes('')
+        setPartsOrderedBy('technician')
       }
     } catch (error) {
       console.error('Error approving request:', error)
@@ -178,6 +182,7 @@ export default function PartRequestsPage() {
         await loadPartCostRequests()
         setSelectedRequest(null)
         setAdminNotes('')
+        setPartsOrderedBy('technician')
       }
     } catch (error) {
       console.error('Error rejecting request:', error)
@@ -385,6 +390,19 @@ export default function PartRequestsPage() {
                       </p>
                     </div>
 
+                    {request.status !== 'pending' && (
+                      <div className="mb-4">
+                        <p className="text-sm font-medium text-gray-700 mb-1">Parts Ordered By</p>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          request.parts_ordered_by === 'technician' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {request.parts_ordered_by === 'technician' ? 'Technician' : 'Office'}
+                        </span>
+                      </div>
+                    )}
+
                     {request.status === 'pending' && (
                       <div className="flex gap-3">
                         <Button
@@ -431,6 +449,24 @@ export default function PartRequestsPage() {
               
               <div className="space-y-4">
                 <div>
+                  <label htmlFor="partsOrderedBy" className="block text-sm font-medium text-gray-700 mb-2">
+                    Parts Ordered By
+                  </label>
+                  <select
+                    id="partsOrderedBy"
+                    value={partsOrderedBy}
+                    onChange={(e) => setPartsOrderedBy(e.target.value as 'technician' | 'office')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="technician">Technician</option>
+                    <option value="office">Office</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    This affects payout calculation - technician parts are reimbursed, office parts are not.
+                  </p>
+                </div>
+
+                <div>
                   <label htmlFor="adminNotes" className="block text-sm font-medium text-gray-700 mb-2">
                     Admin Notes (Optional)
                   </label>
@@ -466,6 +502,7 @@ export default function PartRequestsPage() {
                   onClick={() => {
                     setSelectedRequest(null)
                     setAdminNotes('')
+                    setPartsOrderedBy('technician')
                   }}
                   variant="secondary"
                   className="w-full"

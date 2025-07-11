@@ -7,6 +7,8 @@ import { jobsService, technicianService, testDatabaseConnection, type Technician
 import KPIDashboard from '@/components/KPIDashboard'
 import DateFilter from '@/components/DateFilter'
 import Sidebar from '@/components/Sidebar'
+import SalesByStateChart from '@/components/charts/SalesByStateChart'
+import ClientTracker from '@/components/ClientTracker'
 import { LogOut, Upload, FileText, Users, Settings, BarChart3, Database, AlertTriangle, CheckCircle, Clock, RefreshCw } from 'lucide-react'
 
 interface AdminMetrics extends DashboardMetrics {
@@ -380,6 +382,23 @@ export default function AdminDashboard() {
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Business Metrics</h2>
             <KPIDashboard metrics={metrics} />
+          </div>
+        )}
+
+        {/* Sales by State Chart */}
+        {metrics && (
+          <div className="mb-8">
+            <SalesByStateChart data={metrics.salesByState || []} />
+          </div>
+        )}
+
+        {/* Top Clients Section */}
+        {metrics && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Top 25 Clients</h2>
+            <ClientTracker 
+              userRole="admin"
+            />
           </div>
         )}
 

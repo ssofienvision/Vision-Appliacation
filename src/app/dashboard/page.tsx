@@ -10,6 +10,8 @@ import TechnicianFilter from '@/components/TechnicianFilter'
 import SalesOverTimeChart from '@/components/charts/SalesOverTimeChart'
 import ServiceCallPieChart from '@/components/charts/ServiceCallPieChart'
 import JobTypeSalesChart from '@/components/charts/JobTypeSalesChart'
+import SalesByStateChart from '@/components/charts/SalesByStateChart'
+import ClientTracker from '@/components/ClientTracker'
 import Sidebar from '@/components/Sidebar'
 import { LogOut, Upload, X, FileText, CheckCircle, AlertCircle } from 'lucide-react'
 
@@ -242,7 +244,7 @@ export default function Dashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<Technician | null>(null)
-  const [selectedPeriod, setSelectedPeriod] = useState('thisMonth')
+  const [selectedPeriod, setSelectedPeriod] = useState('allTime')
   const [selectedTechnician, setSelectedTechnician] = useState<string>('')
   const [technicians, setTechnicians] = useState<Technician[]>([])
   const [metrics, setMetrics] = useState<DashboardMetrics>({
@@ -254,7 +256,24 @@ export default function Dashboard() {
     totalLabor: 0,
     totalParts: 0,
     jobsThisMonth: 0,
-    salesThisMonth: 0
+    salesThisMonth: 0,
+    avgLaborPerJob: 0,
+    invoiceCount: 0,
+    salesByState: [],
+    returnCustomerCount: 0,
+    returnCustomerPercentage: 0,
+    totalPartProfit: 0,
+    avgPartProfit: 0,
+    serviceCallCount: 0,
+    totalServiceCallSales: 0,
+    serviceCallToTotalSalesRatio: 0,
+    partsSalesRatio: 0,
+    laborSalesRatio: 0,
+    totalPayout: 0,
+    oemJobsCount: 0,
+    nonOemJobsCount: 0,
+    oemSales: 0,
+    nonOemSales: 0
   })
   const [salesOverTime, setSalesOverTime] = useState<SalesData[]>([])
   const [jobTypeSummary, setJobTypeSummary] = useState<JobTypeData[]>([])
@@ -355,6 +374,9 @@ export default function Dashboard() {
         startDate = new Date(now.getFullYear() - 1, 0, 1)
         endDate = new Date(now.getFullYear() - 1, 11, 31)
         break
+      case 'allTime':
+        // Return empty object to get all data without date filters
+        return {}
       default:
         return {}
     }
@@ -659,6 +681,17 @@ export default function Dashboard() {
             </div>
             
             <JobTypeSalesChart data={jobTypeSummary} />
+            
+            <SalesByStateChart data={metrics.salesByState || []} />
+          </div>
+          
+          {/* Top Clients Section */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Top 25 Clients</h2>
+            <ClientTracker 
+              userRole={currentUser?.role} 
+              technicianCode={currentUser?.technician_code}
+            />
           </div>
         </main>
 

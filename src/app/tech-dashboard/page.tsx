@@ -10,6 +10,7 @@ import DateFilter from '@/components/DateFilter';
 import SalesOverTimeChart from '@/components/charts/SalesOverTimeChart';
 import ServiceCallPieChart from '@/components/charts/ServiceCallPieChart';
 import JobTypeSalesChart from '@/components/charts/JobTypeSalesChart';
+import SalesByStateChart from '@/components/charts/SalesByStateChart';
 import JobList from '@/components/JobList';
 import PayoutCalculator from '@/components/PayoutCalculator';
 import { LogOut } from 'lucide-react';
@@ -28,7 +29,17 @@ export default function TechDashboard() {
     totalLabor: 0,
     totalParts: 0,
     jobsThisMonth: 0,
-    salesThisMonth: 0
+    salesThisMonth: 0,
+    avgLaborPerJob: 0,
+    invoiceCount: 0,
+    salesByState: [],
+    returnCustomerCount: 0,
+    returnCustomerPercentage: 0,
+    totalPartProfit: 0,
+    avgPartProfit: 0,
+    serviceCallCount: 0,
+    totalServiceCallSales: 0,
+    serviceCallToTotalSalesRatio: 0
   });
   const [jobs, setJobs] = useState<any[]>([]);
   const [salesOverTime, setSalesOverTime] = useState<SalesData[]>([]);
@@ -169,6 +180,9 @@ export default function TechDashboard() {
           </div>
           <div className="mt-6">
             <JobTypeSalesChart data={jobTypeSummary} />
+          </div>
+          <div className="mt-6">
+            <SalesByStateChart data={metrics.salesByState || []} />
           </div>
           <div className="mt-6">
             <JobList jobs={jobs} />

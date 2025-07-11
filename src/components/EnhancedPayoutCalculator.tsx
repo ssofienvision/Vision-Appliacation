@@ -5,11 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Calculator, Package, Building2, User } from 'lucide-react'
 import { Job } from '@/lib/database'
 
-interface PartsRequest {
+interface PartCostRequest {
   id: number
-  requesting_tech: string
-  invoice_cost: number
-  po_number: string | null
+  job_id: number
+  technician_id: string
+  current_parts_cost: number
+  requested_parts_cost: number
+  notes: string
+  status: 'pending' | 'approved' | 'rejected'
+  admin_notes?: string
+  approved_by?: string
+  approved_at?: string
+  parts_ordered_by: 'technician' | 'office'
+  created_at: string
+  updated_at: string
 }
 
 interface PayoutData {
@@ -36,7 +45,7 @@ interface PayoutData {
 
 interface EnhancedPayoutCalculatorProps {
   jobs: Job[]
-  partsRequests: PartsRequest[]
+  partsRequests: PartCostRequest[]
   technicianCode: string
 }
 
@@ -97,25 +106,25 @@ export default function EnhancedPayoutCalculator({
 
     // Filter parts requests for this technician
     const techPartsRequests = partsRequests?.filter(
-      part => part.requesting_tech === technicianCode
+      part => part.technician_id === technicianCode
     ) || []
 
-    // Separate tech-bought vs office-bought parts
+    // Separate tech-bought vs office-bought parts based on parts_ordered_by
     const techBoughtParts = techPartsRequests.filter(
-      part => !part.po_number || part.po_number.trim() === ''
+      part => part.parts_ordered_by === 'technician'
     )
     
     const officeBoughtParts = techPartsRequests.filter(
-      part => part.po_number && part.po_number.trim() !== ''
+      part => part.parts_ordered_by === 'office'
     )
 
-    // Calculate parts totals
+    // Calculate parts totals using requested_parts_cost
     const techPartsTotal = techBoughtParts.reduce((sum, part) => 
-      sum + (part.invoice_cost || 0), 0
+      sum + (part.requested_parts_cost || 0), 0
     )
     
     const officePartsTotal = officeBoughtParts.reduce((sum, part) => 
-      sum + (part.invoice_cost || 0), 0
+      sum + (part.requested_parts_cost || 0), 0
     )
 
     const totalPartsValue = techPartsTotal + officePartsTotal
@@ -217,7 +226,7 @@ export default function EnhancedPayoutCalculator({
                   ${payoutData.techPartsTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-sm text-green-600">
-                  {payoutData.techPartsCount} parts (no PO number)
+                  {payoutData.techPartsCount} parts (ordered by technician)
                 </p>
               </div>
 
@@ -234,7 +243,7 @@ export default function EnhancedPayoutCalculator({
                   ${payoutData.officePartsTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {payoutData.officePartsCount} parts (has PO number)
+                  {payoutData.officePartsCount} parts (ordered by office)
                 </p>
               </div>
             </div>
@@ -304,8 +313,8 @@ export default function EnhancedPayoutCalculator({
               </ul>
               <p><strong>Parts Logic:</strong></p>
               <ul className="ml-4 space-y-1">
-                <li>• <strong>No PO Number:</strong> Part bought by technician → Reimbursed</li>
-                <li>• <strong>Has PO Number:</strong> Part bought by office → Not reimbursed</li>
+                <li>• <strong>Ordered by Technician:</strong> Part bought by technician → Reimbursed</li>
+                <li>• <strong>Ordered by Office:</strong> Part bought by office → Not reimbursed</li>
               </ul>
               <p><strong>Final Payout:</strong> Total Commission + Tech-Bought Parts</p>
             </div>

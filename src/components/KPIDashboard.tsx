@@ -11,7 +11,8 @@ import {
   Percent,
   PieChart,
   Banknote,
-  Target
+  Target,
+  FileText
 } from 'lucide-react'
 
 interface Metrics {
@@ -36,6 +37,16 @@ interface Metrics {
   oemSales?: number
   nonOemSales?: number
   serviceCallCount?: number
+  
+  // New KPIs
+  invoiceCount?: number
+  salesByState?: { state: string; sales: number; count: number }[]
+  returnCustomerCount?: number
+  returnCustomerPercentage?: number
+  totalPartProfit?: number
+  avgPartProfit?: number
+  totalServiceCallSales?: number
+  serviceCallToTotalSalesRatio?: number
 }
 
 interface KPIDashboardProps {
@@ -93,6 +104,14 @@ export default function KPIDashboard({ metrics }: KPIDashboardProps) {
       bgColor: 'bg-purple-100',
       category: 'primary'
     },
+    {
+      title: 'Invoice Count',
+      value: formatNumber(metrics.invoiceCount || 0),
+      icon: FileText,
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-100',
+      category: 'primary'
+    },
 
     // Performance Metrics
     {
@@ -127,12 +146,37 @@ export default function KPIDashboard({ metrics }: KPIDashboardProps) {
       bgColor: 'bg-rose-100',
       category: 'performance'
     },
+    {
+      title: 'Total Part Profit',
+      value: formatCurrency(metrics.totalPartProfit || 0),
+      icon: TrendingUp,
+      color: 'text-green-600',
+      bgColor: 'bg-green-100',
+      category: 'performance'
+    },
+    {
+      title: 'Avg Part Profit',
+      value: formatCurrency(metrics.avgPartProfit || 0),
+      icon: Calculator,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-100',
+      category: 'performance'
+    },
 
     // Service & Activity Metrics
     {
       title: 'Service Calls',
       value: `${formatNumber(metrics.serviceCallCount || 0)} (${formatPercent(metrics.serviceCallPercentage || 0)})`,
       icon: Wrench,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      category: 'service'
+    },
+    {
+      title: 'Service Call Sales',
+      value: formatCurrency(metrics.totalServiceCallSales || 0),
+      subtitle: `${formatPercent(metrics.serviceCallToTotalSalesRatio || 0)} of total sales`,
+      icon: DollarSign,
       color: 'text-red-600',
       bgColor: 'bg-red-100',
       category: 'service'
@@ -160,6 +204,16 @@ export default function KPIDashboard({ metrics }: KPIDashboardProps) {
       color: 'text-green-600',
       bgColor: 'bg-green-100',
       category: 'service'
+    },
+
+    // Customer Metrics
+    {
+      title: 'Return Customers',
+      value: `${formatNumber(metrics.returnCustomerCount || 0)} (${formatPercent(metrics.returnCustomerPercentage || 0)})`,
+      icon: Users,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+      category: 'customers'
     },
 
     // OEM vs Non-OEM Analysis
@@ -197,6 +251,7 @@ export default function KPIDashboard({ metrics }: KPIDashboardProps) {
   const primaryCards = kpiCards.filter(card => card.category === 'primary')
   const performanceCards = kpiCards.filter(card => card.category === 'performance')
   const serviceCards = kpiCards.filter(card => card.category === 'service')
+  const customerCards = kpiCards.filter(card => card.category === 'customers')
   const oemCards = kpiCards.filter(card => card.category === 'oem')
   const payoutCards = kpiCards.filter(card => card.category === 'payout')
 
@@ -236,6 +291,9 @@ export default function KPIDashboard({ metrics }: KPIDashboardProps) {
 
       {/* Service & Activity */}
       {renderKPISection('Service Activity', serviceCards)}
+
+      {/* Customer Metrics */}
+      {renderKPISection('Customer Analytics', customerCards)}
 
       {/* OEM Analysis */}
       {renderKPISection('OEM vs Non-OEM Analysis', oemCards)}

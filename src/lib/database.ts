@@ -34,6 +34,25 @@ export interface DashboardMetrics {
   totalParts: number
   jobsThisMonth: number
   salesThisMonth: number
+  // New KPIs
+  avgLaborPerJob: number
+  invoiceCount: number
+  salesByState: { state: string; sales: number; count: number }[]
+  returnCustomerCount: number
+  returnCustomerPercentage: number
+  totalPartProfit: number
+  avgPartProfit: number
+  serviceCallCount: number
+  totalServiceCallSales: number
+  serviceCallToTotalSalesRatio: number
+  // Additional metrics
+  partsSalesRatio: number
+  laborSalesRatio: number
+  totalPayout: number
+  oemJobsCount: number
+  nonOemJobsCount: number
+  oemSales: number
+  nonOemSales: number
 }
 
 export interface SalesData {
@@ -47,75 +66,44 @@ export interface JobTypeData {
   count: number
 }
 
-// Mock data for development
-const mockJobs: Job[] = [
-  {
-    invoice_number: 'INV001',
-    customer_name: 'John Smith',
-    total_amount: 245.50,
-    date_recorded: '2024-01-15',
-    technician: 'TECH001',
-    type_serviced: 'HVAC Repair',
-    make_serviced: 'Carrier',
-    parts_cost: 45.00,
-    is_oem_client: false,
-    created_at: '2024-01-15T10:00:00Z',
-    updated_at: '2024-01-15T10:00:00Z'
-  },
-  {
-    invoice_number: 'INV002',
-    customer_name: 'Sarah Johnson',
-    total_amount: 189.75,
-    date_recorded: '2024-01-14',
-    technician: 'TECH002',
-    type_serviced: 'Plumbing',
-    make_serviced: 'Kohler',
-    parts_cost: 25.00,
-    is_oem_client: true,
-    created_at: '2024-01-14T14:30:00Z',
-    updated_at: '2024-01-14T14:30:00Z'
-  },
-  {
-    invoice_number: 'INV003',
-    customer_name: 'Mike Wilson',
-    total_amount: 320.00,
-    date_recorded: '2024-01-13',
-    technician: 'TECH001',
-    type_serviced: 'Electrical',
-    make_serviced: 'Siemens',
-    parts_cost: 80.00,
-    is_oem_client: false,
-    created_at: '2024-01-13T09:15:00Z',
-    updated_at: '2024-01-13T09:15:00Z'
-  }
-]
+export interface ClientData {
+  customer_name: string
+  totalSales: number
+  totalJobs: number
+  avgSalePerJob: number
+  firstJobDate: string
+  lastJobDate: string
+  totalParts: number
+  totalLabor: number
+  returnCustomer: boolean
+  paycode: number
+  state: string
+  city: string
+  monthlyData: {
+    month: string
+    sales: number
+    jobs: number
+    parts: number
+    labor: number
+  }[]
+}
 
-const mockTechnicians: Technician[] = [
-  {
-    technician_code: 'TECH001',
-    name: 'Alex Johnson',
-    email: 'alex@example.com',
-    role: 'technician',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    technician_code: 'TECH002',
-    name: 'Maria Garcia',
-    email: 'maria@example.com',
-    role: 'technician',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    technician_code: 'ADMIN001',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    role: 'admin',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  }
-]
+export interface ClientFilters {
+  startDate?: string
+  endDate?: string
+  technician?: string
+  state?: string
+  city?: string
+  returnCustomer?: boolean
+  minSales?: number
+  maxSales?: number
+  minJobs?: number
+  maxJobs?: number
+  sortBy?: 'totalSales' | 'totalJobs' | 'avgSalePerJob' | 'lastJobDate'
+  sortOrder?: 'asc' | 'desc'
+  limit?: number
+}
+
 
 // Database connection test function
 export const testDatabaseConnection = async () => {
@@ -149,12 +137,6 @@ export const testDatabaseConnection = async () => {
 // Jobs Service
 export const jobsService = {
   async getJobs(filters: any = {}): Promise<Job[]> {
-    // Check if we're in mock mode
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log('📊 Using mock jobs data')
-      return mockJobs
-    }
-
     console.log('🔍 Fetching jobs from database with filters:', filters)
     console.log('🔍 Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'Set' : 'Missing')
     console.log('🔍 Supabase Anon Key:', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'Set' : 'Missing')
@@ -236,33 +218,36 @@ export const jobsService = {
   },
 
   async getDashboardMetrics(filters: any = {}): Promise<DashboardMetrics> {
-    // Check if we're in mock mode
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log('📊 Using mock dashboard metrics')
-      const totalJobs = mockJobs.length
-      const totalSales = mockJobs.reduce((sum: number, job: Job) => sum + job.total_amount, 0)
-      const totalParts = mockJobs.reduce((sum: number, job: Job) => sum + job.parts_cost, 0)
-      const totalLabor = totalSales - totalParts
-      const avgSalePerJob = totalJobs > 0 ? totalSales / totalJobs : 0
-      const serviceCalls = mockJobs.filter((job: Job) => job.parts_cost > 0).length
-      const serviceCallPercentage = totalJobs > 0 ? (serviceCalls / totalJobs) * 100 : 0
+    console.log('🔍 Getting dashboard metrics with filters:', filters)
 
-      return {
-        totalJobs,
-        totalSales,
-        totalTechnicians: mockTechnicians.length,
-        avgSalePerJob,
-        serviceCallPercentage,
-        totalLabor,
-        totalParts,
-        jobsThisMonth: totalJobs,
-        salesThisMonth: totalSales
-      }
+    // First, get total count without limit to check if we're hitting limits
+    let countQuery = supabase
+      .from('jobs')
+      .select('*', { count: 'exact', head: true })
+
+    if (filters.technician) {
+      countQuery = countQuery.eq('technician', filters.technician)
+    }
+    if (filters.startDate) {
+      countQuery = countQuery.gte('date_recorded', filters.startDate)
+    }
+    if (filters.endDate) {
+      countQuery = countQuery.lte('date_recorded', filters.endDate)
     }
 
+    const { count: totalCount, error: countError } = await countQuery
+    if (countError) {
+      console.error('❌ Error getting total count:', countError)
+      throw countError
+    }
+
+    console.log('📊 Total jobs in database:', totalCount)
+
+    // Now get all jobs with a high limit to ensure we get all data
     let query = supabase
       .from('jobs')
       .select('*')
+      .limit(10000) // Set a high limit to get all jobs
 
     if (filters.technician) {
       query = query.eq('technician', filters.technician)
@@ -275,18 +260,80 @@ export const jobsService = {
     }
 
     const { data, error } = await query
-    if (error) throw error
+    if (error) {
+      console.error('❌ Error fetching jobs:', error)
+      throw error
+    }
 
     const jobs = data || []
+    console.log('📊 Jobs fetched:', jobs.length)
+
     const totalJobs = jobs.length
     const totalSales = jobs.reduce((sum: number, job: any) => sum + (job.total_amount || 0), 0)
     const totalParts = jobs.reduce((sum: number, job: any) => sum + (job.parts_cost || 0), 0)
     const totalLabor = totalSales - totalParts
     const avgSalePerJob = totalJobs > 0 ? totalSales / totalJobs : 0
+    const avgLaborPerJob = totalJobs > 0 ? totalLabor / totalJobs : 0
 
-    // Calculate service call percentage (jobs with parts_cost > 0)
-    const serviceCalls = jobs.filter((job: any) => (job.parts_cost || 0) > 0).length
-    const serviceCallPercentage = totalJobs > 0 ? (serviceCalls / totalJobs) * 100 : 0
+    // Calculate ratios
+    const partsSalesRatio = totalSales > 0 ? (totalParts / totalSales) * 100 : 0
+    const laborSalesRatio = totalSales > 0 ? (totalLabor / totalSales) * 100 : 0
+
+    // Calculate service call metrics - be more flexible with amounts
+    const serviceCallJobs = jobs.filter((job: any) => {
+      const amount = job.total_amount || 0
+      // Check for common service call amounts
+      return amount === 74.95 || amount === 89.45 || amount === 75 || amount === 90 || 
+             (amount >= 70 && amount <= 100 && job.parts_cost === 0) // Service calls typically have no parts
+    })
+    const serviceCallCount = serviceCallJobs.length
+    const totalServiceCallSales = serviceCallJobs.reduce((sum: number, job: any) => sum + (job.total_amount || 0), 0)
+    const serviceCallPercentage = totalJobs > 0 ? (serviceCallCount / totalJobs) * 100 : 0
+    const serviceCallToTotalSalesRatio = totalSales > 0 ? (totalServiceCallSales / totalSales) * 100 : 0
+
+    // Calculate invoice count (unique invoice numbers)
+    const uniqueInvoices = new Set(jobs.map((job: any) => job.invoice_number).filter(Boolean))
+    const invoiceCount = uniqueInvoices.size
+
+    // Calculate sales by state
+    const stateSales = jobs.reduce((acc: Record<string, { sales: number; count: number }>, job: any) => {
+      const state = job.state || 'Unknown'
+      if (!acc[state]) {
+        acc[state] = { sales: 0, count: 0 }
+      }
+      acc[state].sales += job.total_amount || 0
+      acc[state].count += 1
+      return acc
+    }, {})
+
+    const salesByState = Object.entries(stateSales)
+      .map(([state, data]) => ({ 
+        state, 
+        sales: (data as { sales: number; count: number }).sales, 
+        count: (data as { sales: number; count: number }).count 
+      }))
+      .sort((a, b) => b.sales - a.sales)
+
+    // Calculate return customers (paycode = 2)
+    const returnCustomers = jobs.filter((job: any) => job.paycode === 2)
+    const returnCustomerCount = returnCustomers.length
+    const returnCustomerPercentage = totalJobs > 0 ? (returnCustomerCount / totalJobs) * 100 : 0
+
+    // Calculate part profit (parts_sold - parts_cost)
+    const totalPartProfit = jobs.reduce((sum: number, job: any) => {
+      const partsSold = job.parts_sold || 0
+      const partsCost = job.parts_cost || 0
+      return sum + (partsSold - partsCost)
+    }, 0)
+    const avgPartProfit = totalJobs > 0 ? totalPartProfit / totalJobs : 0
+
+    // Calculate OEM vs Non-OEM metrics
+    const oemJobs = jobs.filter((job: any) => job.is_oem_client === true)
+    const nonOemJobs = jobs.filter((job: any) => job.is_oem_client === false)
+    const oemJobsCount = oemJobs.length
+    const nonOemJobsCount = nonOemJobs.length
+    const oemSales = oemJobs.reduce((sum: number, job: any) => sum + (job.total_amount || 0), 0)
+    const nonOemSales = nonOemJobs.reduce((sum: number, job: any) => sum + (job.total_amount || 0), 0)
 
     // Get this month's data
     const now = new Date()
@@ -295,9 +342,35 @@ export const jobsService = {
     const jobsThisMonth = thisMonthJobs.length
     const salesThisMonth = thisMonthJobs.reduce((sum: number, job: any) => sum + (job.total_amount || 0), 0)
 
-    // Get total technicians (this would need to be fetched separately in a real app)
+    // Get total technicians
     const { data: techData } = await supabase.from('technicians').select('technician_code')
     const totalTechnicians = techData?.length || 0
+
+    // Calculate total payout (this would need to be implemented based on your payout logic)
+    const totalPayout = jobs.reduce((sum: number, job: any) => {
+      // Simple payout calculation - you might want to adjust this
+      const labor = (job.total_amount || 0) - (job.parts_cost || 0)
+      const isOem = job.is_oem_client === true
+      if (isOem) {
+        return sum + (labor * 0.065) + (job.parts_cost || 0) // 6.5% for OEM
+      } else {
+        return sum + (labor * 0.5) + (job.parts_cost || 0) // 50% for non-OEM
+      }
+    }, 0)
+
+    console.log('📊 Calculated metrics:', {
+      totalJobs,
+      totalSales,
+      totalLabor,
+      totalParts,
+      avgSalePerJob,
+      avgLaborPerJob,
+      partsSalesRatio,
+      laborSalesRatio,
+      serviceCallCount,
+      oemJobsCount,
+      nonOemJobsCount
+    })
 
     return {
       totalJobs,
@@ -308,20 +381,29 @@ export const jobsService = {
       totalLabor,
       totalParts,
       jobsThisMonth,
-      salesThisMonth
+      salesThisMonth,
+      avgLaborPerJob,
+      invoiceCount,
+      salesByState,
+      returnCustomerCount,
+      returnCustomerPercentage,
+      totalPartProfit,
+      avgPartProfit,
+      serviceCallCount,
+      totalServiceCallSales,
+      serviceCallToTotalSalesRatio,
+      // Add the missing metrics
+      partsSalesRatio,
+      laborSalesRatio,
+      totalPayout,
+      oemJobsCount,
+      nonOemJobsCount,
+      oemSales,
+      nonOemSales
     }
   },
 
   async getSalesOverTime(filters: any = {}): Promise<SalesData[]> {
-    // Check if we're in mock mode
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log('📊 Using mock sales data')
-      return [
-        { month: '2024-01', sales: 755.25 },
-        { month: '2024-02', sales: 820.50 },
-        { month: '2024-03', sales: 945.75 }
-      ]
-    }
 
     let query = supabase
       .from('jobs')
@@ -358,15 +440,6 @@ export const jobsService = {
   },
 
   async getJobTypeSummary(filters: any = {}): Promise<JobTypeData[]> {
-    // Check if we're in mock mode
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log('📊 Using mock job type data')
-      return [
-        { type: 'HVAC Repair', totalSales: 245.50, count: 1 },
-        { type: 'Plumbing', totalSales: 189.75, count: 1 },
-        { type: 'Electrical', totalSales: 320.00, count: 1 }
-      ]
-    }
 
     let query = supabase
       .from('jobs')
@@ -407,11 +480,188 @@ export const jobsService = {
       .sort((a, b) => b.totalSales - a.totalSales)
   },
 
+  // Get top clients with detailed analytics
+  async getTopClients(filters: ClientFilters = {}): Promise<ClientData[]> {
+    try {
+      let query = supabase
+        .from('jobs')
+        .select('*')
+
+      // Apply filters
+      if (filters.technician) {
+        query = query.eq('technician', filters.technician)
+      }
+      if (filters.startDate) {
+        query = query.gte('date_recorded', filters.startDate)
+      }
+      if (filters.endDate) {
+        query = query.lte('date_recorded', filters.endDate)
+      }
+      if (filters.state) {
+        query = query.eq('state', filters.state)
+      }
+      if (filters.city) {
+        query = query.eq('city', filters.city)
+      }
+      if (filters.returnCustomer !== undefined) {
+        const paycode = filters.returnCustomer ? 2 : 1
+        query = query.eq('paycode', paycode)
+      }
+
+      const { data, error } = await query
+      if (error) throw error
+
+      const jobs = data || []
+      
+      // Group jobs by customer
+      const clientMap = new Map<string, any[]>()
+      
+      jobs.forEach((job: any) => {
+        const customerName = job.customer_name || 'Unknown Customer'
+        if (!clientMap.has(customerName)) {
+          clientMap.set(customerName, [])
+        }
+        clientMap.get(customerName)!.push(job)
+      })
+
+      // Calculate client metrics
+      const clients: ClientData[] = []
+      
+      clientMap.forEach((clientJobs, customerName) => {
+        const totalSales = clientJobs.reduce((sum: number, job: any) => sum + (job.total_amount || 0), 0)
+        const totalJobs = clientJobs.length
+        const avgSalePerJob = totalJobs > 0 ? totalSales / totalJobs : 0
+        const totalParts = clientJobs.reduce((sum: number, job: any) => sum + (job.parts_cost || 0), 0)
+        const totalLabor = totalSales - totalParts
+        
+        // Get date range
+        const dates = clientJobs.map((job: any) => new Date(job.date_recorded)).sort((a, b) => a.getTime() - b.getTime())
+        const firstJobDate = dates[0]?.toISOString().split('T')[0] || ''
+        const lastJobDate = dates[dates.length - 1]?.toISOString().split('T')[0] || ''
+        
+        // Get return customer status (check if any job has paycode 2)
+        const returnCustomer = clientJobs.some((job: any) => job.paycode === 2)
+        const paycode = returnCustomer ? 2 : 1
+        
+        // Get location (use most recent job's location)
+        const mostRecentJob = clientJobs.sort((a: any, b: any) => 
+          new Date(b.date_recorded).getTime() - new Date(a.date_recorded).getTime()
+        )[0]
+        const state = mostRecentJob?.state || 'Unknown'
+        const city = mostRecentJob?.city || 'Unknown'
+        
+        // Calculate monthly data
+        const monthlyData = this.calculateMonthlyData(clientJobs)
+        
+        clients.push({
+          customer_name: customerName,
+          totalSales,
+          totalJobs,
+          avgSalePerJob,
+          firstJobDate,
+          lastJobDate,
+          totalParts,
+          totalLabor,
+          returnCustomer,
+          paycode,
+          state,
+          city,
+          monthlyData
+        })
+      })
+
+      // Apply additional filters
+      let filteredClients = clients.filter(client => {
+        if (filters.minSales && client.totalSales < filters.minSales) return false
+        if (filters.maxSales && client.totalSales > filters.maxSales) return false
+        if (filters.minJobs && client.totalJobs < filters.minJobs) return false
+        if (filters.maxJobs && client.totalJobs > filters.maxJobs) return false
+        return true
+      })
+
+      // Sort clients
+      const sortBy = filters.sortBy || 'totalSales'
+      const sortOrder = filters.sortOrder || 'desc'
+      
+      filteredClients.sort((a, b) => {
+        let aValue: any = a[sortBy]
+        let bValue: any = b[sortBy]
+        
+        // Handle date sorting
+        if (sortBy === 'lastJobDate') {
+          aValue = new Date(aValue).getTime()
+          bValue = new Date(bValue).getTime()
+        }
+        
+        if (sortOrder === 'asc') {
+          return aValue - bValue
+        } else {
+          return bValue - aValue
+        }
+      })
+
+      // Apply limit
+      const limit = filters.limit || 25
+      return filteredClients.slice(0, limit)
+      
+    } catch (error) {
+      console.error('Error getting top clients:', error)
+      return []
+    }
+  },
+
+  // Helper function to calculate monthly data for a client
+  calculateMonthlyData(jobs: any[]): { month: string; sales: number; jobs: number; parts: number; labor: number }[] {
+    const monthlyMap = new Map<string, { sales: number; jobs: number; parts: number; labor: number }>()
+    
+    jobs.forEach((job: any) => {
+      const month = job.date_recorded.substring(0, 7) // YYYY-MM
+      const sales = job.total_amount || 0
+      const parts = job.parts_cost || 0
+      const labor = sales - parts
+      
+      if (!monthlyMap.has(month)) {
+        monthlyMap.set(month, { sales: 0, jobs: 0, parts: 0, labor: 0 })
+      }
+      
+      const monthData = monthlyMap.get(month)!
+      monthData.sales += sales
+      monthData.jobs += 1
+      monthData.parts += parts
+      monthData.labor += labor
+    })
+    
+    return Array.from(monthlyMap.entries())
+      .map(([month, data]) => ({
+        month,
+        ...data
+      }))
+      .sort((a, b) => a.month.localeCompare(b.month))
+  },
+
+  // Get unique states and cities for filtering
+  async getClientFilterOptions(): Promise<{ states: string[]; cities: string[] }> {
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('state, city')
+        .not('state', 'is', null)
+        .not('city', 'is', null)
+
+      if (error) throw error
+
+      const states = Array.from(new Set(data?.map((job: any) => job.state).filter(Boolean))).sort() as string[]
+      const cities = Array.from(new Set(data?.map((job: any) => job.city).filter(Boolean))).sort() as string[]
+
+      return { states, cities }
+    } catch (error) {
+      console.error('Error getting filter options:', error)
+      return { states: [], cities: [] }
+    }
+  },
+
   // Generate invoice numbers for jobs that don't have them
   async generateMissingInvoiceNumbers(): Promise<{ success: boolean; message: string; updatedCount: number }> {
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      return { success: false, message: 'Cannot update mock data', updatedCount: 0 }
-    }
 
     try {
       // Get all jobs without invoice numbers
@@ -494,11 +744,6 @@ export const jobsService = {
 // Technician Service
 export const technicianService = {
   async getTechnicians(): Promise<Technician[]> {
-    // Check if we're in mock mode
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log('📊 Using mock technicians data')
-      return mockTechnicians
-    }
 
     const { data, error } = await supabase
       .from('technicians')
@@ -510,11 +755,6 @@ export const technicianService = {
   },
 
   async getCurrentTechnician(): Promise<Technician | null> {
-    // Check if we're in mock mode
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log('📊 Using mock current technician data')
-      return mockTechnicians[0] // Return first technician as current user
-    }
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
@@ -530,11 +770,6 @@ export const technicianService = {
   },
 
   async getTechnicianByCode(technicianCode: string): Promise<Technician | null> {
-    // Check if we're in mock mode
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-      console.log('📊 Using mock technician by code data')
-      return mockTechnicians.find(t => t.technician_code === technicianCode) || null
-    }
 
     const { data, error } = await supabase
       .from('technicians')

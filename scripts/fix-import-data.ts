@@ -35,7 +35,7 @@ async function fixImportData() {
 
 async function generateMissingInvoiceNumbers(): Promise<{ success: boolean; message: string; updatedCount: number }> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return { success: false, message: 'Cannot update mock data', updatedCount: 0 }
+    return { success: false, message: 'Supabase environment variables not configured', updatedCount: 0 }
   }
 
   try {
@@ -113,7 +113,7 @@ async function generateMissingInvoiceNumbers(): Promise<{ success: boolean; mess
 
 async function fixNullZipCodes(): Promise<{ success: boolean; message: string; updatedCount: number }> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return { success: false, message: 'Cannot update mock data', updatedCount: 0 }
+    return { success: false, message: 'Supabase environment variables not configured', updatedCount: 0 }
   }
 
   try {

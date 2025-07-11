@@ -10,6 +10,7 @@ export { default as JobTypeSalesChart } from './charts/JobTypeSalesChart'
 
 // Dashboard Components
 export { default as KPIDashboard } from './KPIDashboard'
+export { default as ClientTracker } from './ClientTracker'
 export { default as DateFilter } from './DateFilter'
 export { default as TechnicianFilter } from './TechnicianFilter'
 export { default as MobileNav } from './MobileNav'

@@ -61,6 +61,7 @@ CREATE TABLE part_cost_requests (
     admin_notes TEXT,
     approved_by VARCHAR(50),
     approved_at TIMESTAMP WITH TIME ZONE,
+    parts_ordered_by VARCHAR(20) DEFAULT 'technician' CHECK (parts_ordered_by IN ('technician', 'office')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

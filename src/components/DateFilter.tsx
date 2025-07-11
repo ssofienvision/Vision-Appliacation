@@ -14,6 +14,7 @@ export default function DateFilter({ selectedPeriod, setSelectedPeriod, onFilter
   const [isOpen, setIsOpen] = useState(false)
 
   const periods = [
+    { value: 'allTime', label: 'All Time' },
     { value: 'thisMonth', label: 'This Month' },
     { value: 'lastMonth', label: 'Last Month' },
     { value: 'thisYear', label: 'This Year' },
@@ -38,6 +39,9 @@ export default function DateFilter({ selectedPeriod, setSelectedPeriod, onFilter
     let startDate, endDate
 
     switch (period) {
+      case 'allTime':
+        // Return empty object to get all data without date filters
+        return {}
       case 'thisMonth':
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
         endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0)

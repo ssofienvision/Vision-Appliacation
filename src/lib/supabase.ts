@@ -7,32 +7,39 @@ const supabaseServiceKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
 let supabase: any
 let supabaseAdmin: any
 
-// Development fallback - create mock client if env vars are not set
+// Check if environment variables are set
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️  Supabase environment variables not found. Running in development mode with mock data.')
+  console.warn(`
+    Supabase environment variables are missing.
+    
+    Please create a .env.local file in your project root with:
+    
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+    NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+    
+    Get these values from your Supabase project settings.
+  `)
   
-  // Create a mock Supabase client for development
-  const mockSupabase = {
+  // Create a mock client for development
+  supabase = {
     auth: {
       getUser: async () => ({ data: { user: null }, error: null }),
-      signInWithPassword: async () => ({ data: { user: null }, error: { message: 'Please set up Supabase credentials' } }),
+      signIn: async () => ({ data: { user: null }, error: null }),
       signOut: async () => ({ error: null })
     },
     from: () => ({
-      select: () => ({
-        eq: () => ({ data: [], error: null }),
-        gte: () => ({ data: [], error: null }),
-        lte: () => ({ data: [], error: null }),
-        order: () => ({ data: [], error: null }),
-        limit: () => ({ data: [], error: null }),
-        single: () => ({ data: null, error: null })
-      })
+      select: () => Promise.resolve({ data: [], error: null }),
+      insert: () => Promise.resolve({ data: null, error: null }),
+      update: () => Promise.resolve({ data: null, error: null }),
+      delete: () => Promise.resolve({ data: null, error: null })
     })
   }
   
-  supabase = mockSupabase
-  supabaseAdmin = mockSupabase
+  supabaseAdmin = supabase
 } else {
+
+  // Create Supabase client
   supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,
@@ -53,6 +60,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
     supabaseAdmin = supabase // Fallback to regular client
   }
 }
+
 
 export { supabase, supabaseAdmin }
 
@@ -235,4 +243,4 @@ export type Database = {
       }
     }
   }
-} 
+}
