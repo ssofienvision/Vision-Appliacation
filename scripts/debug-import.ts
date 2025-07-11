@@ -19,7 +19,7 @@ async function debugImport() {
     
     if (jobs && jobs.length > 0) {
       console.log('\n📋 Sample job data:')
-      jobs.forEach((job, index) => {
+      jobs.forEach((job: any, index: number) => {
         console.log(`Job ${index + 1}:`)
         console.log(`  - Invoice Number: "${job.invoice_number}" (type: ${typeof job.invoice_number})`)
         console.log(`  - Zip Code: "${job.zip_code_for_job}" (type: ${typeof job.zip_code_for_job})`)
@@ -76,7 +76,7 @@ async function debugImport() {
     } else {
       console.log(`\n📋 Jobs with NULL invoice numbers: ${nullInvoices?.length || 0}`)
       if (nullInvoices && nullInvoices.length > 0) {
-        nullInvoices.forEach((job, index) => {
+        nullInvoices.forEach((job: any, index: number) => {
           console.log(`NULL Invoice Job ${index + 1}:`)
           console.log(`  - Customer: "${job.customer_name}"`)
           console.log(`  - Date: "${job.date_recorded}"`)
@@ -98,7 +98,7 @@ async function debugImport() {
     } else {
       console.log(`\n📋 Jobs with NULL zip codes: ${nullZips?.length || 0}`)
       if (nullZips && nullZips.length > 0) {
-        nullZips.forEach((job, index) => {
+        nullZips.forEach((job: any, index: number) => {
           console.log(`NULL Zip Job ${index + 1}:`)
           console.log(`  - Customer: "${job.customer_name}"`)
           console.log(`  - Invoice: "${job.invoice_number}"`)
